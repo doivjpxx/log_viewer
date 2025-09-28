@@ -2,6 +2,8 @@ mod commands;
 mod file_manager;
 mod search_engine;
 mod types;
+mod format_detector;
+mod parser_engine;
 
 use commands::*;
 
@@ -17,7 +19,10 @@ pub fn run() {
             get_file_info,
             read_file_chunk,
             search_in_file,
-            get_lines_range
+            get_lines_range,
+            detect_log_format,
+            parse_lines_with_config,
+            get_parsed_lines_range
         ]);
 
     match builder.run(tauri::generate_context!()) {

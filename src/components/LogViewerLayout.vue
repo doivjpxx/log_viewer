@@ -58,6 +58,9 @@
     <!-- Filter Dialog -->
     <FilterDialog />
 
+    <!-- Parser Configuration Dialog -->
+    <ParserConfigDialog />
+
     <!-- Keyboard Shortcuts Help -->
     <div v-if="showShortcuts" class="shortcuts-overlay" @click="showShortcuts = false">
       <div class="shortcuts-content" @click.stop>
@@ -152,6 +155,7 @@ import VirtualList from './VirtualList.vue'
 import StatusBar from './StatusBar.vue'
 import SearchDialog from './SearchDialog.vue'
 import FilterDialog from './FilterDialog.vue'
+import ParserConfigDialog from './ParserConfigDialog.vue'
 import { useFileStore } from '../stores/fileStore'
 import { useUIStore } from '../stores/uiStore'
 

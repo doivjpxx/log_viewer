@@ -80,6 +80,14 @@
           🔎
         </button>
         <button
+          @click="uiStore.toggleParserConfig"
+          :disabled="!currentFile"
+          class="btn btn-config"
+          title="Parser Configuration"
+        >
+          ⚙️
+        </button>
+        <button
           @click="clearSearch"
           :disabled="!hasResults"
           class="btn btn-clear"
@@ -425,6 +433,19 @@ function toggleTheme() {
 .btn-clear {
   border-radius: 0;
   border-left: none;
+}
+
+.btn-config {
+  background: #17a2b8;
+  border-color: #17a2b8;
+  color: white;
+  border-radius: 0;
+  border-left: none;
+}
+
+.btn-config:hover:not(:disabled) {
+  background: #138496;
+  border-color: #117a8b;
 }
 
 .btn-nav {

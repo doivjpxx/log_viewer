@@ -1,6 +1,8 @@
 use crate::file_manager::FileManager;
 use crate::search_engine::SearchEngine;
-use crate::types::{ApiError, FileInfo, FileChunk, SearchOptions, SearchResult};
+use crate::format_detector::FormatDetector;
+use crate::parser_engine::ParserEngine;
+use crate::types::{ApiError, FileInfo, FileChunk, SearchOptions, SearchResult, ParserConfig, FormatDetectionResult, ParsedLogLine};
 use tauri::command;
 
 #[command]
@@ -100,4 +102,62 @@ pub async fn get_lines_range(
         });
     }
     FileManager::get_lines_range(&path, start_line, end_line).await
+}
+
+// Parser-related commands for Week 7 implementation
+
+#[command]
+pub async fn detect_log_format(path: String, sample_size: Option<usize>) -> Result<FormatDetectionResult, ApiError> {
+    if path.is_empty() {
+        return Err(ApiError {
+            message: "File path cannot be empty".to_string(),
+            code: "INVALID_PATH".to_string(),
+        });
+    }
+
+    let sample_size = sample_size.unwrap_or(20);
+    let lines = FileManager::get_lines_range(&path, 0, sample_size).await?;
+    let detection_result = FormatDetector::detect_format(&lines)?;
+    
+    Ok(detection_result)
+}
+
+#[command]
+pub async fn parse_lines_with_config(
+    lines: Vec<String>,
+    config: ParserConfig,
+    start_line_number: u64,
+    start_byte_offset: u64,
+) -> Result<Vec<ParsedLogLine>, ApiError> {
+    let mut parser = ParserEngine::new(config)?;
+    let parsed_lines = parser.parse_lines(&lines, start_line_number, start_byte_offset)?;
+    
+    Ok(parsed_lines)
+}
+
+#[command]
+pub async fn get_parsed_lines_range(
+    path: String,
+    start_line: usize,
+    end_line: usize,
+    config: ParserConfig,
+) -> Result<Vec<ParsedLogLine>, ApiError> {
+    if path.is_empty() {
+        return Err(ApiError {
+            message: "File path cannot be empty".to_string(),
+            code: "INVALID_PATH".to_string(),
+        });
+    }
+    if start_line > end_line {
+        return Err(ApiError {
+            message: "Start line cannot be greater than end line".to_string(),
+            code: "INVALID_RANGE".to_string(),
+        });
+    }
+
+    let lines = FileManager::get_lines_range(&path, start_line, end_line).await?;
+    let mut parser = ParserEngine::new(config)?;
+    let parsed_lines = parser.parse_lines(&lines, start_line as u64, 0)?;
+    
+    Ok(parsed_lines)
 }

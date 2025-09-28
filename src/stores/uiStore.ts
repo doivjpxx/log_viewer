@@ -32,6 +32,7 @@ export const useUIStore = defineStore('ui', () => {
   const showGoToLineDialog = ref(false);
   const showSearchDialog = ref(false);
   const showFilterDialog = ref(false);
+  const showParserConfigDialog = ref(false);
   const currentLine = ref(0);
   const selectedLines = ref<Set<number>>(new Set());
 
@@ -46,11 +47,13 @@ export const useUIStore = defineStore('ui', () => {
     if (settings.value.theme === 'dark') return true;
     if (settings.value.theme === 'light') return false;
     // Auto theme - check system preference
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (typeof globalThis !== 'undefined' && globalThis.matchMedia) {
+      return globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
     }
     return false;
   });
+
+  const isParserConfigOpen = computed(() => showParserConfigDialog.value);
 
   // Actions
   function updateSettings(newSettings: Partial<UISettings>): void {
@@ -125,6 +128,10 @@ export const useUIStore = defineStore('ui', () => {
     showGoToLineDialog.value = !showGoToLineDialog.value;
   }
 
+  function toggleParserConfig(): void {
+    showParserConfigDialog.value = !showParserConfigDialog.value;
+  }
+
   function closeAllDialogs(): void {
     searchPanelOpen.value = false;
     settingsModalOpen.value = false;
@@ -132,6 +139,7 @@ export const useUIStore = defineStore('ui', () => {
     showGoToLineDialog.value = false;
     showSearchDialog.value = false;
     showFilterDialog.value = false;
+    showParserConfigDialog.value = false;
   }
 
   function setCurrentLine(lineNumber: number): void {
@@ -174,12 +182,14 @@ export const useUIStore = defineStore('ui', () => {
     showGoToLineDialog,
     showSearchDialog,
     showFilterDialog,
+    showParserConfigDialog,
     currentLine,
     selectedLines,
     windowSize,
     
     // Computed
     isDarkTheme,
+    isParserConfigOpen,
     
     // Actions
     updateSettings,
@@ -193,6 +203,7 @@ export const useUIStore = defineStore('ui', () => {
     toggleSearchDialog,
     toggleFilterDialog,
     toggleGoToLineDialog,
+    toggleParserConfig,
     closeAllDialogs,
     setCurrentLine,
     selectLine,
