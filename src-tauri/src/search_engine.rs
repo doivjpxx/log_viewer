@@ -21,6 +21,12 @@ impl SearchEngine {
         
         let mut results = Vec::new();
         let mut line_number = 0;
+        let mut all_lines: Vec<String> = Vec::new();
+
+        // Read all lines first to support context lines
+        while let Some(line) = lines.next_line().await? {
+            all_lines.push(line);
+        }
 
         // Prepare search pattern
         let pattern = if options.is_regex {
@@ -35,10 +41,40 @@ impl SearchEngine {
             }
         };
 
-        while let Some(line) = lines.next_line().await? {
-            line_number += 1;
+        // Search through lines
+        for (index, line) in all_lines.iter().enumerate() {
+            line_number = index + 1;
             
-            if let Some(search_result) = search_in_line(&line, line_number, &pattern) {
+            // Apply line range filtering if specified
+            if let Some(start) = options.start_line {
+                if line_number < start {
+                    continue;
+                }
+            }
+            if let Some(end) = options.end_line {
+                if line_number > end {
+                    break;
+                }
+            }
+            
+            if let Some(mut search_result) = search_in_line(line, line_number, &pattern) {
+                // Add context lines if requested
+                let context_lines = options.context_lines.unwrap_or(0);
+                if context_lines > 0 {
+                    search_result.context_before = Some(get_context_lines(
+                        &all_lines,
+                        index,
+                        context_lines,
+                        true,
+                    ));
+                    search_result.context_after = Some(get_context_lines(
+                        &all_lines,
+                        index,
+                        context_lines,
+                        false,
+                    ));
+                }
+                
                 results.push(search_result);
                 
                 if results.len() >= options.max_results {
@@ -66,10 +102,42 @@ fn search_in_line(line: &str, line_number: usize, pattern: &Regex) -> Option<Sea
             line_number,
             content: line.to_string(),
             highlights,
+            context_before: None,
+            context_after: None,
         })
     } else {
         None
     }
+}
+
+fn get_context_lines(
+    all_lines: &[String],
+    current_index: usize,
+    context_count: usize,
+    before: bool,
+) -> Vec<String> {
+    if context_count == 0 {
+        return Vec::new();
+    }
+
+    let mut context = Vec::new();
+    
+    if before {
+        let start = current_index.saturating_sub(context_count);
+        for i in start..current_index {
+            if i < all_lines.len() {
+                context.push(all_lines[i].clone());
+            }
+        }
+    } else {
+        let start = current_index + 1;
+        let end = std::cmp::min(start + context_count, all_lines.len());
+        for i in start..end {
+            context.push(all_lines[i].clone());
+        }
+    }
+
+    context
 }
 
 fn create_regex_pattern(query: &str, case_sensitive: bool) -> Result<Regex, ApiError> {

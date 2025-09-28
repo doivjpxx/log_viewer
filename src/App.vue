@@ -90,9 +90,11 @@ onUnmounted(() => {
   --bg-secondary: #f8f9fa;
   --bg-tertiary: #e9ecef;
   --bg-accent: #3498db;
+  --bg-accent-subtle: rgba(52, 152, 219, 0.1);
   --bg-success: #27ae60;
   --bg-warning: #f39c12;
   --bg-error: #e74c3c;
+  --bg-error-hover: #c0392b;
   
   --text-primary: #2c3e50;
   --text-secondary: #6c757d;
@@ -103,9 +105,10 @@ onUnmounted(() => {
   --text-warning: #f39c12;
   --text-error: #e74c3c;
   
-  --border-primary: #dee2e6;
+    --border-primary: #dee2e6;
   --border-secondary: #ced4da;
-  --border-focus: #3498db;
+  --border-focus: #80bdff;
+  --focus-ring: rgba(0, 123, 255, 0.25);
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -133,9 +136,11 @@ onUnmounted(() => {
   --bg-secondary: #2d3748;
   --bg-tertiary: #4a5568;
   --bg-accent: #3498db;
+  --bg-accent-subtle: rgba(52, 152, 219, 0.1);
   --bg-success: #38a169;
   --bg-warning: #ed8936;
   --bg-error: #e53e3e;
+  --bg-error-hover: #c53030;
   
   --text-primary: #f7fafc;
   --text-secondary: #e2e8f0;
@@ -149,6 +154,7 @@ onUnmounted(() => {
   --border-primary: #4a5568;
   --border-secondary: #2d3748;
   --border-focus: #63b3ed;
+  --focus-ring: rgba(99, 179, 237, 0.25);
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);

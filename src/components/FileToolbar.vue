@@ -64,6 +64,22 @@
           🔍
         </button>
         <button
+          @click="uiStore.toggleSearchDialog"
+          :disabled="!currentFile"
+          class="btn btn-advanced"
+          title="Advanced Search (Ctrl+Shift+F)"
+        >
+          🔍+
+        </button>
+        <button
+          @click="uiStore.toggleFilterDialog"
+          :disabled="!currentFile"
+          class="btn btn-filter"
+          title="Filter Lines"
+        >
+          🔎
+        </button>
+        <button
           @click="clearSearch"
           :disabled="!hasResults"
           class="btn btn-clear"
@@ -154,6 +170,17 @@
       >
         ⬇
       </button>
+      
+      <div class="separator"></div>
+      
+      <!-- Theme toggle -->
+      <button
+        @click="toggleTheme"
+        class="btn btn-nav"
+        :title="uiStore.isDarkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
+      >
+        {{ uiStore.isDarkTheme ? '☀️' : '🌙' }}
+      </button>
     </div>
   </div>
 
@@ -190,11 +217,13 @@ import { ref, computed, nextTick } from 'vue'
 import { useFileStore } from '../stores/fileStore'
 import { useSearchStore } from '../stores/searchStore'
 import { useViewStore } from '../stores/viewStore'
+import { useUIStore } from '../stores/uiStore'
 
 // Stores
 const fileStore = useFileStore()
 const searchStore = useSearchStore()
 const viewStore = useViewStore()
+const uiStore = useUIStore()
 
 // Local state
 const searchQuery = ref('')
@@ -293,6 +322,21 @@ function scrollToTop() {
 
 function scrollToBottom() {
   viewStore.scrollToBottom()
+}
+
+function toggleTheme() {
+  const currentTheme = uiStore.settings.theme
+  let newTheme: 'auto' | 'light' | 'dark'
+  
+  if (currentTheme === 'auto') {
+    newTheme = 'dark'
+  } else if (currentTheme === 'dark') {
+    newTheme = 'light'
+  } else {
+    newTheme = 'auto'
+  }
+  
+  uiStore.updateSettings({ theme: newTheme })
 }
 </script>
 

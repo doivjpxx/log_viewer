@@ -31,6 +31,7 @@ export const useUIStore = defineStore('ui', () => {
   const showShortcutsHelp = ref(false);
   const showGoToLineDialog = ref(false);
   const showSearchDialog = ref(false);
+  const showFilterDialog = ref(false);
   const currentLine = ref(0);
   const selectedLines = ref<Set<number>>(new Set());
 
@@ -116,6 +117,10 @@ export const useUIStore = defineStore('ui', () => {
     showSearchDialog.value = !showSearchDialog.value;
   }
 
+  function toggleFilterDialog(): void {
+    showFilterDialog.value = !showFilterDialog.value;
+  }
+
   function toggleGoToLineDialog(): void {
     showGoToLineDialog.value = !showGoToLineDialog.value;
   }
@@ -126,6 +131,7 @@ export const useUIStore = defineStore('ui', () => {
     showShortcutsHelp.value = false;
     showGoToLineDialog.value = false;
     showSearchDialog.value = false;
+    showFilterDialog.value = false;
   }
 
   function setCurrentLine(lineNumber: number): void {
@@ -167,6 +173,7 @@ export const useUIStore = defineStore('ui', () => {
     showShortcutsHelp,
     showGoToLineDialog,
     showSearchDialog,
+    showFilterDialog,
     currentLine,
     selectedLines,
     windowSize,
@@ -184,6 +191,7 @@ export const useUIStore = defineStore('ui', () => {
     toggleSettingsModal,
     toggleShortcutsHelp,
     toggleSearchDialog,
+    toggleFilterDialog,
     toggleGoToLineDialog,
     closeAllDialogs,
     setCurrentLine,

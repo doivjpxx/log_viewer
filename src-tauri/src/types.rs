@@ -25,6 +25,9 @@ pub struct SearchOptions {
     pub is_case_sensitive: bool,
     pub is_whole_word: bool,
     pub max_results: usize,
+    pub context_lines: Option<usize>,
+    pub start_line: Option<usize>,
+    pub end_line: Option<usize>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +35,8 @@ pub struct SearchResult {
     pub line_number: usize,
     pub content: String,
     pub highlights: Vec<HighlightRange>,
+    pub context_before: Option<Vec<String>>,
+    pub context_after: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

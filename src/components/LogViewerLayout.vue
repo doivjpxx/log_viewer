@@ -52,6 +52,12 @@
     <!-- Status Bar -->
     <StatusBar />
 
+    <!-- Advanced Search Dialog -->
+    <SearchDialog />
+
+    <!-- Filter Dialog -->
+    <FilterDialog />
+
     <!-- Keyboard Shortcuts Help -->
     <div v-if="showShortcuts" class="shortcuts-overlay" @click="showShortcuts = false">
       <div class="shortcuts-content" @click.stop>
@@ -144,6 +150,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import FileToolbar from './FileToolbar.vue'
 import VirtualList from './VirtualList.vue'
 import StatusBar from './StatusBar.vue'
+import SearchDialog from './SearchDialog.vue'
+import FilterDialog from './FilterDialog.vue'
 import { useFileStore } from '../stores/fileStore'
 import { useUIStore } from '../stores/uiStore'
 

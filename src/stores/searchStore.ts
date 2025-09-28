@@ -10,6 +10,8 @@ export interface SearchResult {
     start: number;
     end: number;
   }>;
+  context_before?: string[];
+  context_after?: string[];
 }
 
 export interface SearchOptions {
@@ -18,6 +20,9 @@ export interface SearchOptions {
   is_case_sensitive: boolean;
   is_whole_word: boolean;
   max_results: number;
+  context_lines?: number;
+  start_line?: number;
+  end_line?: number;
 }
 
 export const useSearchStore = defineStore('search', () => {
@@ -29,6 +34,7 @@ export const useSearchStore = defineStore('search', () => {
     is_case_sensitive: false,
     is_whole_word: false,
     max_results: 1000,
+    context_lines: 0,
   });
   const searchResults = ref<SearchResult[]>([]);
   const currentResultIndex = ref(-1);
@@ -45,6 +51,11 @@ export const useSearchStore = defineStore('search', () => {
     return null;
   });
   const hasActiveSearch = computed(() => searchOptions.value.query.length > 0);
+  
+  const searchProgress = computed(() => {
+    // For now, return simple progress based on results found
+    return isSearching.value ? Math.min(90, searchResults.value.length * 2) : 100;
+  });
 
   // Actions
   async function search(query: string, options: Partial<SearchOptions> = {}): Promise<void> {
@@ -147,6 +158,7 @@ export const useSearchStore = defineStore('search', () => {
     totalResults,
     currentResult,
     hasActiveSearch,
+    searchProgress,
     
     // Actions
     search,
