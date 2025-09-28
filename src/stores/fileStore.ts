@@ -168,6 +168,12 @@ export const useFileStore = defineStore('file', () => {
     fileChunks.value.set(fileId, chunks);
   }
 
+  function closeCurrentFile(): void {
+    if (currentFile.value) {
+      closeFile(currentFile.value.id);
+    }
+  }
+
   function getFileChunks(fileId: string): FileChunk[] {
     return fileChunks.value.get(fileId) || [];
   }
@@ -194,6 +200,7 @@ export const useFileStore = defineStore('file', () => {
     openFile,
     loadFileChunk,
     closeFile,
+    closeCurrentFile,
     closeAllFiles,
     switchToFile,
     updateFileChunk,

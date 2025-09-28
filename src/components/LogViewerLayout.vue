@@ -144,17 +144,22 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import FileToolbar from './FileToolbar.vue'
 import VirtualList from './VirtualList.vue'
 import StatusBar from './StatusBar.vue'
-import { useFileStore } from '../stores'
+import { useFileStore } from '../stores/fileStore'
+import { useUIStore } from '../stores/uiStore'
 
 // Stores
 const fileStore = useFileStore()
+const uiStore = useUIStore()
 
 // Local state
 const containerHeight = ref(600)
-const showShortcuts = ref(false)
 
 // Computed
 const currentFile = computed(() => fileStore.currentFile)
+const showShortcuts = computed({
+  get: () => uiStore.showShortcutsHelp,
+  set: (value) => { if (!value) uiStore.toggleShortcutsHelp() }
+})
 
 // Methods
 async function openFile() {
@@ -170,19 +175,34 @@ async function openFile() {
 
 function updateContainerHeight() {
   // Calculate available height for virtual list
-  const toolbarHeight = 56 // Approximate toolbar height
-  const statusBarHeight = 32 // Approximate status bar height
-  const windowHeight = 800 // Fixed height for Tauri environment
-  
-  containerHeight.value = windowHeight - toolbarHeight - statusBarHeight - 20 // padding
+  if (typeof globalThis !== 'undefined' && globalThis.window) {
+    const toolbarHeight = 56 // Approximate toolbar height
+    const statusBarHeight = 32 // Approximate status bar height
+    const windowHeight = globalThis.window.innerHeight
+    
+    containerHeight.value = Math.max(300, windowHeight - toolbarHeight - statusBarHeight - 20)
+  }
+}
+
+function handleResize() {
+  updateContainerHeight()
+  if (typeof globalThis !== 'undefined' && globalThis.window) {
+    uiStore.updateWindowSize(globalThis.window.innerWidth, globalThis.window.innerHeight)
+  }
 }
 
 onMounted(() => {
   updateContainerHeight()
+  
+  if (typeof globalThis !== 'undefined' && globalThis.window) {
+    globalThis.window.addEventListener('resize', handleResize)
+  }
 })
 
 onUnmounted(() => {
-  // Cleanup if needed
+  if (typeof globalThis !== 'undefined' && globalThis.window) {
+    globalThis.window.removeEventListener('resize', handleResize)
+  }
 })
 </script>
 
@@ -191,7 +211,9 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #ffffff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .main-content {
@@ -210,7 +232,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
 
 .welcome-content {
@@ -222,18 +244,19 @@ onUnmounted(() => {
 .welcome-icon {
   font-size: 72px;
   margin-bottom: 24px;
+  filter: grayscale(0.2);
 }
 
 .welcome-title {
   font-size: 32px;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-primary);
   margin-bottom: 16px;
 }
 
 .welcome-description {
   font-size: 18px;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   margin-bottom: 32px;
   line-height: 1.6;
 }
@@ -259,14 +282,16 @@ onUnmounted(() => {
 }
 
 .welcome-btn--primary {
-  background: #3498db;
-  color: white;
+  background: var(--bg-accent);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-md);
 }
 
 .welcome-btn--primary:hover {
-  background: #2980b9;
+  background: var(--bg-accent);
+  filter: brightness(1.1);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .welcome-features {
@@ -281,9 +306,14 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--bg-secondary);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-primary);
+  transition: background-color 0.2s ease;
+}
+
+.feature:hover {
+  background: var(--bg-tertiary);
 }
 
 .feature-icon {
@@ -292,7 +322,7 @@ onUnmounted(() => {
 
 .feature-text {
   font-size: 14px;
-  color: #34495e;
+  color: var(--text-primary);
 }
 
 /* Keyboard shortcuts overlay */
@@ -307,22 +337,24 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .shortcuts-content {
-  background: white;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
   max-width: 800px;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .shortcuts-content h3 {
   margin: 0 0 24px 0;
   font-size: 24px;
-  color: #2c3e50;
+  color: var(--text-primary);
   text-align: center;
 }
 
@@ -336,8 +368,8 @@ onUnmounted(() => {
 .shortcut-group h4 {
   margin: 0 0 12px 0;
   font-size: 16px;
-  color: #34495e;
-  border-bottom: 2px solid #ecf0f1;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-primary);
   padding-bottom: 8px;
 }
 
@@ -346,7 +378,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #f8f9fa;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .shortcut-item:last-child {
@@ -354,13 +386,13 @@ onUnmounted(() => {
 }
 
 kbd {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
   border-radius: 4px;
   padding: 4px 8px;
-  font-family: 'Monaco', 'Menlo', monospace;
+  font-family: 'Monaco', 'Menlo', 'JetBrains Mono', monospace;
   font-size: 12px;
-  color: #495057;
+  color: var(--text-secondary);
   min-width: 60px;
   text-align: center;
 }
@@ -368,7 +400,7 @@ kbd {
 .shortcuts-footer {
   text-align: center;
   padding-top: 16px;
-  border-top: 1px solid #ecf0f1;
+  border-top: 1px solid var(--border-primary);
 }
 
 .btn {
@@ -377,15 +409,17 @@ kbd {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  transition: all 0.2s ease;
 }
 
 .btn-primary {
-  background: #3498db;
-  color: white;
+  background: var(--bg-accent);
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover {
-  background: #2980b9;
+  background: var(--bg-accent);
+  filter: brightness(1.1);
 }
 
 /* Responsive design */
@@ -409,10 +443,64 @@ kbd {
   .shortcuts-content {
     margin: 16px;
     padding: 16px;
+    max-height: 90vh;
   }
 
   .shortcuts-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .shortcut-group h4 {
+    font-size: 14px;
+  }
+
+  .shortcut-item {
+    padding: 6px 0;
+  }
+
+  kbd {
+    min-width: 50px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-icon {
+    font-size: 56px;
+  }
+
+  .welcome-title {
+    font-size: 20px;
+  }
+
+  .welcome-description {
+    font-size: 14px;
+  }
+
+  .shortcuts-content {
+    margin: 8px;
+    padding: 12px;
+  }
+
+  .shortcuts-content h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .feature {
+    border: 2px solid var(--border-primary);
+  }
+  
+  .shortcuts-content {
+    border: 2px solid var(--border-primary);
+  }
+  
+  kbd {
+    border: 2px solid var(--border-secondary);
   }
 }
 </style>
