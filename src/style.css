@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for log viewer */
+@layer base {
+  :root {
+    --color-primary: 59 130 246;
+    --color-secondary: 75 85 99;
+    --color-background: 255 255 255;
+    --color-surface: 249 250 251;
+    --color-error: 239 68 68;
+    --color-warning: 245 158 11;
+    --color-success: 34 197 94;
+  }
+  
+  [data-theme="dark"] {
+    --color-background: 17 24 39;
+    --color-surface: 31 41 55;
+  }
+}
+
+@layer components {
+  .log-line {
+    @apply font-mono text-sm leading-relaxed px-4 py-1 border-b border-gray-100 hover:bg-gray-50;
+  }
+  
+  .log-line.selected {
+    @apply bg-blue-100 border-blue-200;
+  }
+  
+  .log-line.error {
+    @apply bg-red-50 border-red-200 text-red-800;
+  }
+  
+  .log-line.warning {
+    @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+  }
+  
+  .virtual-list {
+    @apply overflow-auto;
+    height: 100%;
+  }
+  
+  .search-highlight {
+    @apply bg-yellow-200 text-yellow-900 px-1 rounded;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgb(107 114 128);
+  }
+}
