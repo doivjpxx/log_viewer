@@ -5,6 +5,7 @@ export { useFilterStore } from './filterStore';
 export { useUIStore } from './uiStore';
 export { useViewStore } from './viewStore';
 export { useParserStore } from './parserStore';
+export { useTableStore } from './tableStore';
 
 // Re-export types for convenience
 export type { LogFile, FileChunk } from './fileStore';

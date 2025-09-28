@@ -5,14 +5,28 @@
 
     <!-- Main Content Area -->
     <div class="main-content">
-      <!-- Virtual List -->
-      <VirtualList 
-        v-if="currentFile"
-        :container-height="containerHeight"
-        :line-height="20"
-        :buffer-size="20"
-        class="virtual-list"
-      />
+      <!-- Content when file is loaded -->
+      <template v-if="currentFile">
+        <!-- View Mode Toggle -->
+        <div class="view-controls bg-white border-b border-gray-200 px-4 py-2">
+          <ViewModeToggle />
+        </div>
+        
+        <!-- List View -->
+        <VirtualList 
+          v-if="isListMode"
+          :container-height="containerHeight"
+          :line-height="20"
+          :buffer-size="20"
+          class="virtual-list flex-1"
+        />
+        
+        <!-- Table View -->
+        <TableViewer 
+          v-else-if="isTableMode"
+          class="flex-1"
+        />
+      </template>
       
       <!-- Welcome Screen -->
       <div v-else class="welcome-screen">
@@ -42,6 +56,10 @@
               <div class="feature">
                 <span class="feature-icon">🎨</span>
                 <span class="feature-text">Syntax highlighting</span>
+              </div>
+              <div class="feature">
+                <span class="feature-icon">📋</span>
+                <span class="feature-text">Table & List views</span>
               </div>
             </div>
           </div>
@@ -155,6 +173,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import FileToolbar from './FileToolbar.vue'
 import VirtualList from './VirtualList.vue'
+import TableViewer from './TableViewer.vue'
+import ViewModeToggle from './ViewModeToggle.vue'
 import StatusBar from './StatusBar.vue'
 import SearchDialog from './SearchDialog.vue'
 import FilterDialog from './FilterDialog.vue'
@@ -162,16 +182,20 @@ import ParserConfigDialog from './ParserConfigDialog.vue'
 import ExportDialog from './ExportDialog.vue'
 import { useFileStore } from '../stores/fileStore'
 import { useUIStore } from '../stores/uiStore'
+import { useTableStore } from '../stores/tableStore'
 
 // Stores
 const fileStore = useFileStore()
 const uiStore = useUIStore()
+const tableStore = useTableStore()
 
 // Local state
 const containerHeight = ref(600)
 
 // Computed
 const currentFile = computed(() => fileStore.currentFile)
+const isListMode = computed(() => tableStore.isListView)
+const isTableMode = computed(() => tableStore.isTableView)
 const showShortcuts = computed({
   get: () => uiStore.showShortcutsHelp,
   set: (value) => { if (!value) uiStore.toggleShortcutsHelp() }

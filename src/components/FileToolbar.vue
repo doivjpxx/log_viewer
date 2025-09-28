@@ -169,6 +169,13 @@
       
       <div class="separator"></div>
       
+      <!-- View Mode Toggle -->
+      <div class="view-mode-section" v-if="currentFile">
+        <ViewModeToggle />
+      </div>
+      
+      <div class="separator"></div>
+      
       <button
         @click="scrollToTop"
         :disabled="!currentFile"
@@ -235,6 +242,7 @@ import { useSearchStore } from '../stores/searchStore'
 import { useViewStore } from '../stores/viewStore'
 import { useUIStore } from '../stores/uiStore'
 import { useParserStore } from '../stores/parserStore'
+import ViewModeToggle from './ViewModeToggle.vue'
 
 // Stores
 const fileStore = useFileStore()
@@ -387,6 +395,11 @@ function toggleTheme() {
 
 .toolbar-navigation {
   flex: 0 0 auto;
+}
+
+.view-mode-section {
+  display: flex;
+  align-items: center;
 }
 
 .btn {
