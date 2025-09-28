@@ -9,10 +9,24 @@ pub fn greet(name: &str) -> String {
 }
 
 #[command]
-pub async fn open_file_dialog() -> Result<Option<String>, ApiError> {
-    // Placeholder implementation
-    // This will be properly implemented with tauri-plugin-dialog
-    Ok(Some("placeholder_path".to_string()))
+pub async fn open_file_dialog(app_handle: tauri::AppHandle) -> Result<Option<String>, ApiError> {
+    use tauri_plugin_dialog::DialogExt;
+    
+    let file_path = app_handle
+        .dialog()
+        .file()
+        .add_filter("Log files", &["log", "txt"])
+        .add_filter("All files", &["*"])
+        .set_title("Select a log file")
+        .blocking_pick_file();
+        
+    match file_path {
+        Some(path) => {
+            let path_str = path.to_string();
+            Ok(Some(path_str))
+        },
+        None => Ok(None),
+    }
 }
 
 #[command]

@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { invoke } from '@tauri-apps/api/core';
+import { useFileStore } from './fileStore';
 
 export interface SearchResult {
-  line: number;
+  line_number: number;
   content: string;
   highlights: Array<{
     start: number;
@@ -12,10 +14,10 @@ export interface SearchResult {
 
 export interface SearchOptions {
   query: string;
-  isRegex: boolean;
-  isCaseSensitive: boolean;
-  isWholeWord: boolean;
-  maxResults: number;
+  is_regex: boolean;
+  is_case_sensitive: boolean;
+  is_whole_word: boolean;
+  max_results: number;
 }
 
 export const useSearchStore = defineStore('search', () => {
@@ -23,14 +25,15 @@ export const useSearchStore = defineStore('search', () => {
   const isSearching = ref(false);
   const searchOptions = ref<SearchOptions>({
     query: '',
-    isRegex: false,
-    isCaseSensitive: false,
-    isWholeWord: false,
-    maxResults: 1000,
+    is_regex: false,
+    is_case_sensitive: false,
+    is_whole_word: false,
+    max_results: 1000,
   });
   const searchResults = ref<SearchResult[]>([]);
   const currentResultIndex = ref(-1);
   const searchHistory = ref<string[]>([]);
+  const searchError = ref<string | null>(null);
 
   // Getters
   const hasResults = computed(() => searchResults.value.length > 0);
@@ -50,15 +53,23 @@ export const useSearchStore = defineStore('search', () => {
       return;
     }
 
+    const fileStore = useFileStore();
+    if (!fileStore.currentFile) {
+      searchError.value = 'No file is currently open';
+      return;
+    }
+
     try {
       isSearching.value = true;
+      searchError.value = null;
       
       // Update search options
-      searchOptions.value = {
+      const searchOpts = {
         ...searchOptions.value,
         query: query.trim(),
         ...options,
       };
+      searchOptions.value = searchOpts;
 
       // Add to history if not already present
       if (!searchHistory.value.includes(query)) {
@@ -69,13 +80,17 @@ export const useSearchStore = defineStore('search', () => {
         }
       }
 
-      // This will be implemented with Tauri commands
-      // For now, we create a mock implementation
-      searchResults.value = [];
-      currentResultIndex.value = -1;
+      // Call Tauri backend for search
+      const results = await invoke<SearchResult[]>('search_in_file', {
+        path: fileStore.currentFile.path,
+        options: searchOpts,
+      });
+
+      searchResults.value = results;
+      currentResultIndex.value = results.length > 0 ? 0 : -1;
       
     } catch (error) {
-      console.error('Search error:', error);
+      searchError.value = error instanceof Error ? error.message : 'Search failed';
       searchResults.value = [];
     } finally {
       isSearching.value = false;
@@ -125,6 +140,7 @@ export const useSearchStore = defineStore('search', () => {
     searchResults,
     currentResultIndex,
     searchHistory,
+    searchError,
     
     // Getters
     hasResults,

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { invoke } from '@tauri-apps/api/core';
 
 export interface LogFile {
   id: string;
@@ -16,6 +17,20 @@ export interface FileChunk {
   startLine: number;
   endLine: number;
   content: string[];
+}
+
+export interface FileInfo {
+  path: string;
+  name: string;
+  size: number;
+  encoding: string;
+  line_count?: number;
+  last_modified: string;
+}
+
+// Helper function to generate unique IDs
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
 export const useFileStore = defineStore('file', () => {
@@ -39,35 +54,77 @@ export const useFileStore = defineStore('file', () => {
   });
 
   // Actions
+  async function openFileDialog(): Promise<string | null> {
+    try {
+      const result = await invoke<string | null>('open_file_dialog');
+      return result;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to open file dialog';
+      return null;
+    }
+  }
+
   async function openFile(filePath: string): Promise<void> {
     try {
       isLoading.value = true;
       error.value = null;
       
-      // This will be implemented with Tauri commands
-      // For now, we create a mock implementation
-      const fileInfo: LogFile = {
-        id: crypto.randomUUID(),
-        name: filePath.split('/').pop() || '',
-        path: filePath,
-        size: 0,
-        encoding: 'UTF-8',
-        lines: 0,
+      // Get file info from Rust backend
+      const fileInfo = await invoke<FileInfo>('get_file_info', { path: filePath });
+      
+      const logFile: LogFile = {
+        id: generateId(),
+        name: fileInfo.name,
+        path: fileInfo.path,
+        size: fileInfo.size,
+        encoding: fileInfo.encoding,
+        lines: fileInfo.line_count || 0,
         isLoading: false,
-        lastModified: new Date(),
+        lastModified: new Date(parseInt(fileInfo.last_modified) * 1000),
       };
 
-      currentFile.value = fileInfo;
+      currentFile.value = logFile;
       
       // Add to open files if not already there
       if (!openFiles.value.find(f => f.path === filePath)) {
-        openFiles.value.push(fileInfo);
+        openFiles.value.push(logFile);
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to open file';
       throw err;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  async function loadFileChunk(fileId: string, startLine: number, endLine: number): Promise<void> {
+    const file = openFiles.value.find(f => f.id === fileId);
+    if (!file) {
+      throw new Error('File not found');
+    }
+
+    try {
+      const chunkData = await invoke<{
+        start_line: number;
+        end_line: number;
+        content: string[];
+        total_lines?: number;
+      }>('read_file_chunk', {
+        path: file.path,
+        startLine,
+        endLine,
+      });
+
+      const chunk: FileChunk = {
+        startLine: chunkData.start_line,
+        endLine: chunkData.end_line,
+        content: chunkData.content,
+      };
+
+      updateFileChunk(fileId, chunk);
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load file chunk';
+      throw err;
     }
   }
 
@@ -133,7 +190,9 @@ export const useFileStore = defineStore('file', () => {
     currentFileLines,
     
     // Actions
+    openFileDialog,
     openFile,
+    loadFileChunk,
     closeFile,
     closeAllFiles,
     switchToFile,
