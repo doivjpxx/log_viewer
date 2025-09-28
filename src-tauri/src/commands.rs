@@ -17,6 +17,12 @@ pub async fn open_file_dialog() -> Result<Option<String>, ApiError> {
 
 #[command]
 pub async fn get_file_info(path: String) -> Result<FileInfo, ApiError> {
+    if path.is_empty() {
+        return Err(ApiError {
+            message: "File path cannot be empty".to_string(),
+            code: "INVALID_PATH".to_string(),
+        });
+    }
     FileManager::get_file_info(&path).await
 }
 
@@ -26,6 +32,18 @@ pub async fn read_file_chunk(
     start_line: usize,
     end_line: usize,
 ) -> Result<FileChunk, ApiError> {
+    if path.is_empty() {
+        return Err(ApiError {
+            message: "File path cannot be empty".to_string(),
+            code: "INVALID_PATH".to_string(),
+        });
+    }
+    if start_line > end_line {
+        return Err(ApiError {
+            message: "Start line cannot be greater than end line".to_string(),
+            code: "INVALID_RANGE".to_string(),
+        });
+    }
     FileManager::read_file_chunk(&path, start_line, end_line).await
 }
 
@@ -34,5 +52,17 @@ pub async fn search_in_file(
     path: String,
     options: SearchOptions,
 ) -> Result<Vec<SearchResult>, ApiError> {
+    if path.is_empty() {
+        return Err(ApiError {
+            message: "File path cannot be empty".to_string(),
+            code: "INVALID_PATH".to_string(),
+        });
+    }
+    if options.query.is_empty() {
+        return Err(ApiError {
+            message: "Search query cannot be empty".to_string(),
+            code: "INVALID_QUERY".to_string(),
+        });
+    }
     SearchEngine::search_in_file(&path, options).await
 }

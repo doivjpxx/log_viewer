@@ -24,9 +24,15 @@ impl SearchEngine {
 
         // Prepare search pattern
         let pattern = if options.is_regex {
-            create_regex_pattern(&options.query, options.is_case_sensitive)?
+            match create_regex_pattern(&options.query, options.is_case_sensitive) {
+                Ok(p) => p,
+                Err(e) => return Err(e),
+            }
         } else {
-            create_literal_pattern(&options.query, options.is_case_sensitive, options.is_whole_word)?
+            match create_literal_pattern(&options.query, options.is_case_sensitive, options.is_whole_word) {
+                Ok(p) => p,
+                Err(e) => return Err(e),
+            }
         };
 
         while let Some(line) = lines.next_line().await? {
