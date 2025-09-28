@@ -196,7 +196,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { storeToRefs } from 'pinia'
 import {
   Dialog,
   DialogPanel,
@@ -214,7 +213,7 @@ const parserStore = useParserStore()
 const fileStore = useFileStore()
 
 // Local reactive state
-const selectedFormat = ref<LogFormat>('Plain')
+const selectedFormat = ref<string>('Plain')
 const customRegexPattern = ref('')
 const multilineConfig = ref<MultilineConfig>({
   enabled: false,
@@ -234,14 +233,19 @@ const presets = [
 
 // Watch for changes from store
 watch(() => parserStore.currentConfig, (config) => {
-  selectedFormat.value = config.format
+  if (typeof config.format === 'string') {
+    selectedFormat.value = config.format
+  } else if (typeof config.format === 'object' && 'CustomRegex' in config.format) {
+    selectedFormat.value = 'CustomRegex'
+    customRegexPattern.value = config.format.CustomRegex
+  }
   multilineConfig.value = { ...config.multiline }
 }, { deep: true, immediate: true })
 
 // Update custom regex pattern when format changes
 watch(selectedFormat, (format) => {
-  if (typeof format === 'object' && 'CustomRegex' in format) {
-    customRegexPattern.value = format.CustomRegex
+  if (format === 'CustomRegex' && customRegexPattern.value === '') {
+    customRegexPattern.value = '.*'
   }
 })
 
@@ -257,9 +261,11 @@ const applyPreset = (presetId: string): void => {
 
 const applyConfiguration = (): void => {
   // Set format
-  let format: LogFormat = selectedFormat.value
+  let format: LogFormat
   if (selectedFormat.value === 'CustomRegex') {
     format = { CustomRegex: customRegexPattern.value }
+  } else {
+    format = selectedFormat.value as LogFormat
   }
   
   parserStore.setFormat(format)

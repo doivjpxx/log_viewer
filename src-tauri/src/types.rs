@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileInfo {
@@ -116,12 +115,12 @@ pub enum FieldType {
     Timestamp,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedLogLine {
     pub raw_content: String,
     pub line_number: u64,
     pub byte_offset: u64,
-    pub timestamp: Option<DateTime<Utc>>,
+    pub timestamp: Option<String>,
     pub level: Option<LogLevel>,
     pub message: String,
     pub fields: HashMap<String, serde_json::Value>,
@@ -129,7 +128,7 @@ pub struct ParsedLogLine {
     pub multiline_group_id: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum LogLevel {
     Trace,
     Debug,

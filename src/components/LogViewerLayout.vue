@@ -61,6 +61,9 @@
     <!-- Parser Configuration Dialog -->
     <ParserConfigDialog />
 
+    <!-- Export Dialog -->
+    <ExportDialog />
+
     <!-- Keyboard Shortcuts Help -->
     <div v-if="showShortcuts" class="shortcuts-overlay" @click="showShortcuts = false">
       <div class="shortcuts-content" @click.stop>
@@ -156,6 +159,7 @@ import StatusBar from './StatusBar.vue'
 import SearchDialog from './SearchDialog.vue'
 import FilterDialog from './FilterDialog.vue'
 import ParserConfigDialog from './ParserConfigDialog.vue'
+import ExportDialog from './ExportDialog.vue'
 import { useFileStore } from '../stores/fileStore'
 import { useUIStore } from '../stores/uiStore'
 

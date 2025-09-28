@@ -22,7 +22,12 @@ pub fn run() {
             get_lines_range,
             detect_log_format,
             parse_lines_with_config,
-            get_parsed_lines_range
+            get_parsed_lines_range,
+            // Week 8 Advanced Parser Integration Commands
+            parse_file_batch,
+            search_in_parsed_content,
+            export_parsed_content,
+            validate_parser_config
         ]);
 
     match builder.run(tauri::generate_context!()) {

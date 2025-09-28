@@ -88,6 +88,14 @@
           ⚙️
         </button>
         <button
+          @click="uiStore.toggleExportDialog"
+          :disabled="!currentFile || (!parserStore.parsingEnabled && !fileStore.currentFile)"
+          class="btn btn-export"
+          title="Export Parsed Content"
+        >
+          📥
+        </button>
+        <button
           @click="clearSearch"
           :disabled="!hasResults"
           class="btn btn-clear"
@@ -226,12 +234,14 @@ import { useFileStore } from '../stores/fileStore'
 import { useSearchStore } from '../stores/searchStore'
 import { useViewStore } from '../stores/viewStore'
 import { useUIStore } from '../stores/uiStore'
+import { useParserStore } from '../stores/parserStore'
 
 // Stores
 const fileStore = useFileStore()
 const searchStore = useSearchStore()
 const viewStore = useViewStore()
 const uiStore = useUIStore()
+const parserStore = useParserStore()
 
 // Local state
 const searchQuery = ref('')
@@ -446,6 +456,19 @@ function toggleTheme() {
 .btn-config:hover:not(:disabled) {
   background: #138496;
   border-color: #117a8b;
+}
+
+.btn-export {
+  background: #20c997;
+  border-color: #20c997;
+  color: white;
+  border-radius: 0;
+  border-left: none;
+}
+
+.btn-export:hover:not(:disabled) {
+  background: #1ea085;
+  border-color: #1a9172;
 }
 
 .btn-nav {

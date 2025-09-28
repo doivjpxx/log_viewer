@@ -2,6 +2,42 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 
+export interface ParsedSearchResult {
+  parsed_line: ParsedLogLine
+  search_matches: SearchMatch[]
+  highlighted_content: string
+}
+
+export interface SearchMatch {
+  line_number: number
+  content: string
+  highlights: HighlightRange[]
+  context_before?: string
+  context_after?: string
+}
+
+export interface HighlightRange {
+  start: number
+  end: number
+}
+
+export interface ParserPerformanceMetrics {
+  lines_processed: number
+  processing_time_ms: number
+  lines_per_second: number
+  multiline_groups: number
+  parse_errors: number
+  memory_usage_bytes: number
+}
+
+export interface ExportOptions {
+  format: 'json' | 'csv' | 'plain'
+  include_raw_content: boolean
+  include_parsed_fields: boolean
+  include_metadata: boolean
+  max_lines?: number
+}
+
 // Types for parser functionality - matching Rust types
 export type LogFormat = 
   | 'Plain'
@@ -218,6 +254,115 @@ export const useParserStore = defineStore('parser', () => {
     error.value = null
   }
 
+  // Week 8: Advanced Parser Integration Features
+  
+  // Performance metrics
+  const performanceMetrics = ref<ParserPerformanceMetrics | null>(null)
+
+  // Export functionality
+  const exportParsedContent = async (
+    filePath: string,
+    startLine: number,
+    endLine: number,
+    exportOptions: {
+      format: 'json' | 'csv' | 'plain'
+      include_raw_content: boolean
+      include_parsed_fields: boolean
+      include_metadata: boolean
+      max_lines?: number
+    }
+  ): Promise<string> => {
+    try {
+      error.value = null
+      const result: string = await invoke('export_parsed_content', {
+        path: filePath,
+        parserConfig: currentConfig.value,
+        exportOptions,
+        startLine,
+        endLine
+      })
+      return result
+    } catch (err) {
+      error.value = `Export failed: ${err}`
+      throw err
+    }
+  }
+
+  // Batch parsing with performance metrics
+  const parseFileBatch = async (
+    filePath: string,
+    batchSize: number = 1000,
+    startLine: number = 0,
+    maxLines?: number
+  ): Promise<ParsedLogLine[]> => {
+    try {
+      isParsing.value = true
+      error.value = null
+
+      const result: [ParsedLogLine[], typeof performanceMetrics.value] = await invoke('parse_file_batch', {
+        path: filePath,
+        config: currentConfig.value,
+        batchSize,
+        startLine,
+        maxLines
+      })
+
+      const [parsed, metrics] = result
+      parsedLines.value = parsed
+      performanceMetrics.value = metrics
+      
+      return parsed
+    } catch (err) {
+      error.value = `Batch parsing failed: ${err}`
+      return []
+    } finally {
+      isParsing.value = false
+    }
+  }
+
+  // Search in parsed content
+  const searchInParsedContent = async (
+    filePath: string,
+    searchOptions: {
+      query: string
+      is_regex: boolean
+      is_case_sensitive: boolean
+      is_whole_word: boolean
+      max_results: number
+    },
+    startLine: number,
+    endLine: number
+  ): Promise<ParsedSearchResult[]> => {
+    try {
+      error.value = null
+      const results = await invoke('search_in_parsed_content', {
+        path: filePath,
+        parserConfig: currentConfig.value,
+        searchOptions,
+        startLine,
+        endLine
+      }) as ParsedSearchResult[]
+      return results
+    } catch (err) {
+      error.value = `Parsed content search failed: ${err}`
+      return []
+    }
+  }
+
+  // Validate parser configuration
+  const validateConfig = async (): Promise<string[]> => {
+    try {
+      error.value = null
+      const warnings: string[] = await invoke('validate_parser_config', {
+        config: currentConfig.value
+      })
+      return warnings
+    } catch (err) {
+      error.value = `Config validation failed: ${err}`
+      return [`Config validation error: ${err}`]
+    }
+  }
+
   // Preset configurations
   const applyPresetConfig = (preset: string): void => {
     switch (preset) {
@@ -267,6 +412,7 @@ export const useParserStore = defineStore('parser', () => {
     isDetecting,
     isParsing,
     error,
+    performanceMetrics,
     
     // Getters
     formatName,
@@ -284,6 +430,12 @@ export const useParserStore = defineStore('parser', () => {
     toggleParsing,
     toggleAutoDetection,
     resetConfig,
-    applyPresetConfig
+    applyPresetConfig,
+    
+    // Week 8 Advanced Features
+    exportParsedContent,
+    parseFileBatch,
+    searchInParsedContent,
+    validateConfig
   }
 })

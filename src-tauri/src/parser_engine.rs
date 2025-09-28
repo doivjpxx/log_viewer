@@ -3,7 +3,6 @@ use crate::types::{
 };
 use regex::Regex;
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use serde_json::Value;
 
 pub trait LogFormatParser: Send + Sync {
@@ -256,7 +255,7 @@ impl LogFormatParser for PlainTextParser {
         // Extract timestamp
         let timestamp = if let Some(captures) = self.timestamp_regex.captures(content) {
             let timestamp_str = captures.get(0).unwrap().as_str();
-            self.parse_timestamp(timestamp_str).ok()
+            Some(timestamp_str.to_string())
         } else {
             None
         };
@@ -279,33 +278,9 @@ impl LogFormatParser for PlainTextParser {
 }
 
 impl PlainTextParser {
-    fn parse_timestamp(&self, timestamp_str: &str) -> Result<DateTime<Utc>, chrono::ParseError> {
-        // Try different timestamp formats
-        let formats = [
-            "%Y-%m-%d %H:%M:%S%.3f",
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%dT%H:%M:%S%.3fZ",
-            "%Y-%m-%dT%H:%M:%SZ",
-            "%m/%d/%Y %H:%M:%S",
-            "%b %d %H:%M:%S",
-        ];
-
-        for format in &formats {
-            if let Ok(dt) = DateTime::parse_from_str(timestamp_str, format) {
-                return Ok(dt.with_timezone(&Utc));
-            }
-        }
-
-        // Fallback for formats without timezone info
-        for format in &formats {
-            if let Ok(naive_dt) = chrono::NaiveDateTime::parse_from_str(timestamp_str, format) {
-                return Ok(DateTime::from_naive_utc_and_offset(naive_dt, Utc));
-            }
-        }
-
-        // Return a custom error since we can't construct chrono::ParseError
-        use std::str::FromStr;
-        DateTime::from_str("invalid").map_err(|e| e)
+    fn normalize_timestamp(&self, timestamp_str: &str) -> String {
+        // Return normalized timestamp string - could be enhanced with proper parsing
+        timestamp_str.to_string()
     }
 }
 
@@ -329,9 +304,7 @@ impl LogFormatParser for JsonLinesParser {
             .or(json_value.get("time"))
         {
             if let Some(ts_str) = ts_value.as_str() {
-                DateTime::parse_from_rfc3339(ts_str)
-                    .map(|dt| dt.with_timezone(&Utc))
-                    .ok()
+                Some(ts_str.to_string())
             } else {
                 None
             }

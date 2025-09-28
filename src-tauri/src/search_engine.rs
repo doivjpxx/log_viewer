@@ -85,6 +85,26 @@ impl SearchEngine {
 
         Ok(results)
     }
+
+    /// Search within a single content string (for parsed content search)
+    pub fn search_in_content(
+        content: &str,
+        options: &SearchOptions,
+    ) -> Result<Vec<SearchResult>, ApiError> {
+        let pattern = if options.is_regex {
+            create_regex_pattern(&options.query, options.is_case_sensitive)?
+        } else {
+            create_literal_pattern(&options.query, options.is_case_sensitive, options.is_whole_word)?
+        };
+
+        let mut results = Vec::new();
+        
+        if let Some(search_result) = search_in_line(content, 1, &pattern) {
+            results.push(search_result);
+        }
+
+        Ok(results)
+    }
 }
 
 fn search_in_line(line: &str, line_number: usize, pattern: &Regex) -> Option<SearchResult> {

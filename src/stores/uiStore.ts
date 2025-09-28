@@ -33,6 +33,7 @@ export const useUIStore = defineStore('ui', () => {
   const showSearchDialog = ref(false);
   const showFilterDialog = ref(false);
   const showParserConfigDialog = ref(false);
+  const showExportDialog = ref(false);
   const currentLine = ref(0);
   const selectedLines = ref<Set<number>>(new Set());
 
@@ -54,6 +55,7 @@ export const useUIStore = defineStore('ui', () => {
   });
 
   const isParserConfigOpen = computed(() => showParserConfigDialog.value);
+  const isExportDialogOpen = computed(() => showExportDialog.value);
 
   // Actions
   function updateSettings(newSettings: Partial<UISettings>): void {
@@ -132,6 +134,10 @@ export const useUIStore = defineStore('ui', () => {
     showParserConfigDialog.value = !showParserConfigDialog.value;
   }
 
+  function toggleExportDialog(): void {
+    showExportDialog.value = !showExportDialog.value;
+  }
+
   function closeAllDialogs(): void {
     searchPanelOpen.value = false;
     settingsModalOpen.value = false;
@@ -140,6 +146,7 @@ export const useUIStore = defineStore('ui', () => {
     showSearchDialog.value = false;
     showFilterDialog.value = false;
     showParserConfigDialog.value = false;
+    showExportDialog.value = false;
   }
 
   function setCurrentLine(lineNumber: number): void {
@@ -183,6 +190,7 @@ export const useUIStore = defineStore('ui', () => {
     showSearchDialog,
     showFilterDialog,
     showParserConfigDialog,
+    showExportDialog,
     currentLine,
     selectedLines,
     windowSize,
@@ -190,6 +198,7 @@ export const useUIStore = defineStore('ui', () => {
     // Computed
     isDarkTheme,
     isParserConfigOpen,
+    isExportDialogOpen,
     
     // Actions
     updateSettings,
@@ -204,6 +213,7 @@ export const useUIStore = defineStore('ui', () => {
     toggleFilterDialog,
     toggleGoToLineDialog,
     toggleParserConfig,
+    toggleExportDialog,
     closeAllDialogs,
     setCurrentLine,
     selectLine,
