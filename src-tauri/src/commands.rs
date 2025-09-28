@@ -80,3 +80,24 @@ pub async fn search_in_file(
     }
     SearchEngine::search_in_file(&path, options).await
 }
+
+#[command]
+pub async fn get_lines_range(
+    path: String,
+    start_line: usize,
+    end_line: usize,
+) -> Result<Vec<String>, ApiError> {
+    if path.is_empty() {
+        return Err(ApiError {
+            message: "File path cannot be empty".to_string(),
+            code: "INVALID_PATH".to_string(),
+        });
+    }
+    if start_line > end_line {
+        return Err(ApiError {
+            message: "Start line cannot be greater than end line".to_string(),
+            code: "INVALID_RANGE".to_string(),
+        });
+    }
+    FileManager::get_lines_range(&path, start_line, end_line).await
+}

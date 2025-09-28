@@ -16,7 +16,8 @@ pub fn run() {
             open_file_dialog,
             get_file_info,
             read_file_chunk,
-            search_in_file
+            search_in_file,
+            get_lines_range
         ]);
 
     match builder.run(tauri::generate_context!()) {

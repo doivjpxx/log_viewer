@@ -131,50 +131,71 @@ const loadVisibleItems = async () => {
   
   try {
     const currentFile = fileStore.currentFile
+    const start = startIndex.value
+    const end = Math.min(endIndex.value, totalItems.value - 1)
     
-    // Simple approach: load first 100 lines for now
-    await fileStore.loadFileChunk(currentFile.id, 0, 100)
-    
-    // Get chunks and create mock content
-    const chunks = fileStore.getFileChunks(currentFile.id)
-    const mockContent: string[] = []
-    
-    if (chunks.length > 0) {
-      // Use actual chunk content
-      const chunk = chunks[0]
-      mockContent.push(...chunk.content.slice(0, 50)) // Show first 50 lines
-    } else {
-      // Create mock content
-      for (let i = 0; i < 50; i++) {
-        mockContent.push(`Line ${i + 1}: Sample log content for testing`)
+    if (start <= end) {
+      // Load chunk for visible range
+      await fileStore.loadFileChunk(currentFile.id, start, end)
+      
+      // Get chunks and extract visible lines
+      const chunks = fileStore.getFileChunks(currentFile.id)
+      const lines: LogLine[] = []
+      
+      if (chunks.length > 0) {
+        // Find chunk containing our range
+        for (const chunk of chunks) {
+          if (chunk.startLine <= end && chunk.endLine >= start) {
+            const chunkStart = Math.max(0, start - chunk.startLine)
+            const chunkEnd = Math.min(chunk.content.length - 1, end - chunk.startLine)
+            
+            for (let i = chunkStart; i <= chunkEnd; i++) {
+              if (chunk.content[i]) {
+                const lineNumber = chunk.startLine + i
+                const content = chunk.content[i]
+                lines.push({
+                  lineNumber,
+                  content,
+                  level: parseLogLevel(content),
+                  timestamp: parseTimestamp(content),
+                })
+              }
+            }
+          }
+        }
       }
+      
+      // If no data loaded, create fallback for development
+      if (lines.length === 0 && currentFile.lines > 0) {
+        for (let i = start; i <= Math.min(start + 20, end); i++) {
+          lines.push({
+            lineNumber: i,
+            content: `Line ${i + 1}: Loading content...`,
+            level: undefined,
+            timestamp: undefined,
+          })
+        }
+      }
+      
+      visibleItems.value = lines
     }
-    
-    // Convert to LogLine objects
-    visibleItems.value = mockContent.map((content, index) => ({
-      lineNumber: index,
-      content,
-      level: parseLogLevel(content),
-      timestamp: parseTimestamp(content),
-    }))
-  } catch {
+  } catch (error) {
+    console.error('Failed to load visible items:', error)
     // Create fallback content for debugging
-    const fallbackContent: string[] = []
-    for (let i = 0; i < 20; i++) {
-      fallbackContent.push(`Fallback Line ${i + 1}: Debug content`)
+    const fallbackContent: LogLine[] = []
+    for (let i = 0; i < Math.min(20, totalItems.value); i++) {
+      fallbackContent.push({
+        lineNumber: i,
+        content: `Debug Line ${i + 1}: Error loading content`,
+        level: undefined,
+        timestamp: undefined,
+      })
     }
-    
-    visibleItems.value = fallbackContent.map((content, index) => ({
-      lineNumber: index,
-      content,
-      level: undefined,
-      timestamp: undefined,
-    }))
+    visibleItems.value = fallbackContent
   } finally {
     isLoading.value = false
   }
 }
-
 const parseLogLevel = (content: string): LogLine['level'] => {
   if (content.includes('[ERROR]')) return 'ERROR'
   if (content.includes('[WARN]')) return 'WARN'

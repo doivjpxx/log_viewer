@@ -219,4 +219,56 @@ impl FileManager {
 
         Ok(count)
     }
+
+    pub async fn get_lines_range<P: AsRef<Path>>(
+        path: P,
+        start_line: usize,
+        end_line: usize,
+    ) -> Result<Vec<String>, ApiError> {
+        let path = path.as_ref();
+        
+        // Validate file access
+        if !path.exists() {
+            return Err(ApiError {
+                message: "File does not exist".to_string(),
+                code: "FILE_NOT_FOUND".to_string(),
+            });
+        }
+
+        let file = tokio::fs::File::open(path).await?;
+        let reader = BufReader::with_capacity(64 * 1024, file); // 64KB buffer
+        
+        let mut lines = Vec::new();
+        let mut current_line = 0;
+        let mut reader_lines = reader.lines();
+
+        // Skip to start line
+        while current_line < start_line {
+            match reader_lines.next_line().await? {
+                Some(_) => current_line += 1,
+                None => return Ok(lines), // EOF before start_line
+            }
+        }
+
+        // Read lines in the specified range
+        while current_line <= end_line {
+            match reader_lines.next_line().await? {
+                Some(line) => {
+                    // Handle very long lines (truncate if > 10KB)
+                    let processed_line = if line.len() > 10240 {
+                        format!("{}... [line truncated, {} chars total]", 
+                               &line[..10240], line.len())
+                    } else {
+                        line
+                    };
+                    
+                    lines.push(processed_line);
+                    current_line += 1;
+                }
+                None => break, // EOF
+            }
+        }
+
+        Ok(lines)
+    }
 }
